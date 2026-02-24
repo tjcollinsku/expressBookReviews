@@ -21,83 +21,75 @@ public_users.post("/register", (req, res) => {
   return res.status(200).json({ message: "Customer successfully registered. Now you can login" });
 });
 
-// Get the book list available in the shop - Task 10: async/await with Promise
+// Internal data endpoint used by Axios calls below
+public_users.get('/api/books', function (req, res) {
+  return res.status(200).json(books);
+});
+
+// Get the book list available in the shop - Task 10: async/await with Axios
 public_users.get('/', async function (req, res) {
   try {
-    const bookList = await new Promise((resolve, reject) => {
-      if (books) {
-        resolve(books);
-      } else {
-        reject(new Error("No books found"));
-      }
-    });
-    return res.status(200).json(bookList);
+    const response = await axios.get('http://localhost:5000/api/books');
+    return res.status(200).json(response.data);
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 });
 
-// Get book details based on ISBN - Task 10: async/await with Promise
+// Get book details based on ISBN - Task 10: async/await with Axios
 public_users.get('/isbn/:isbn', async function (req, res) {
   const isbn = req.params.isbn;
   try {
-    const book = await new Promise((resolve, reject) => {
-      const foundBook = books[isbn];
-      if (foundBook) {
-        resolve(foundBook);
-      } else {
-        reject(new Error("Book not found"));
-      }
-    });
-    return res.status(200).json(book);
+    const response = await axios.get('http://localhost:5000/api/books');
+    const book = response.data[isbn];
+    if (book) {
+      return res.status(200).json(book);
+    }
+    return res.status(404).json({ message: "Book not found" });
   } catch (error) {
-    return res.status(404).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 });
 
-// Get book details based on author - Task 10: async/await with Promise
+// Get book details based on author - Task 10: async/await with Axios
 public_users.get('/author/:author', async function (req, res) {
   const author = req.params.author;
   try {
-    const booksByAuthor = await new Promise((resolve, reject) => {
-      const filtered = {};
-      Object.keys(books).forEach(key => {
-        if (books[key].author.toLowerCase() === author.toLowerCase()) {
-          filtered[key] = books[key];
-        }
-      });
-      if (Object.keys(filtered).length > 0) {
-        resolve(filtered);
-      } else {
-        reject(new Error("No books found for this author"));
+    const response = await axios.get('http://localhost:5000/api/books');
+    const allBooks = response.data;
+    const filtered = {};
+    Object.keys(allBooks).forEach(key => {
+      if (allBooks[key].author.toLowerCase() === author.toLowerCase()) {
+        filtered[key] = allBooks[key];
       }
     });
-    return res.status(200).json({ booksByAuthor });
+    if (Object.keys(filtered).length > 0) {
+      return res.status(200).json({ booksByAuthor: filtered });
+    }
+    return res.status(404).json({ message: "No books found for this author" });
   } catch (error) {
-    return res.status(404).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 });
 
-// Get all books based on title - Task 10: async/await with Promise
+// Get all books based on title - Task 10: async/await with Axios
 public_users.get('/title/:title', async function (req, res) {
   const title = req.params.title;
   try {
-    const booksByTitle = await new Promise((resolve, reject) => {
-      const filtered = {};
-      Object.keys(books).forEach(key => {
-        if (books[key].title.toLowerCase() === title.toLowerCase()) {
-          filtered[key] = books[key];
-        }
-      });
-      if (Object.keys(filtered).length > 0) {
-        resolve(filtered);
-      } else {
-        reject(new Error("No books found with this title"));
+    const response = await axios.get('http://localhost:5000/api/books');
+    const allBooks = response.data;
+    const filtered = {};
+    Object.keys(allBooks).forEach(key => {
+      if (allBooks[key].title.toLowerCase() === title.toLowerCase()) {
+        filtered[key] = allBooks[key];
       }
     });
-    return res.status(200).json({ booksByTitle });
+    if (Object.keys(filtered).length > 0) {
+      return res.status(200).json({ booksByTitle: filtered });
+    }
+    return res.status(404).json({ message: "No books found with this title" });
   } catch (error) {
-    return res.status(404).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 });
 
